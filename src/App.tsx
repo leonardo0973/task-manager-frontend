@@ -1,3 +1,4 @@
+import AppFooter from './components/AppFooter'
 import AppHeader from './components/AppHeader'
 import TaskFilters from './components/TaskFilters'
 import TaskForm from './components/TaskForm'
@@ -63,9 +64,7 @@ function App() {
         </section>
       </main>
 
-      <footer className="app-footer">
-        <p>Diseño Frontend con Frameworks · EC2 F1 A5</p>
-      </footer>
+      <AppFooter courseName="Diseño Frontend con Frameworks" />
     </div>
   )
 }
