@@ -3,22 +3,28 @@
 Aplicación desarrollada con React, TypeScript, Vite y PNPM para administrar tareas.
 Proyecto integrador de la materia *Diseño Frontend con Frameworks*.
 
-## Alcance actual (EC2 F1 A6)
+## Alcance actual (EC2 F2 A7)
 
-La aplicación permite visualizar una colección local de tareas mediante componentes React.
+La aplicación administra una colección local de tareas mediante estado de React. Actualmente permite:
 
-Actualmente incluye:
+- Registrar tareas.
+- Consultar la colección.
+- Completar y reabrir tareas.
+- Editar títulos.
+- Cancelar una edición.
+- Eliminar con confirmación.
+- Eliminar todas las tareas completadas en una sola operación.
+- Calcular el resumen automáticamente.
+- Mostrar una colección vacía.
 
-- Modelo de tarea con TypeScript (`Task` y `TaskStatus`).
-- Cinco tareas locales en `src/data/tasks.ts`.
-- Renderizado mediante `map`.
-- Uso de claves estables (`key={task.id}`).
-- Estados pendiente y completada (componente `TaskStatusBadge`).
-- Resumen calculado a partir de la colección.
-- Mensaje para una colección vacía.
-- Diseño adaptable.
+Los cambios permanecen en memoria y se reinician al recargar.
 
-Los formularios, eventos y operaciones CRUD se implementarán en actividades posteriores.
+## Operaciones CRUD
+
+- Create: registro mediante el formulario (`spread`).
+- Read: renderizado de la colección (`map`).
+- Update: cambio de estado y edición (`map` y `spread`).
+- Delete: eliminación confirmada (`filter`).
 
 ## Tecnologías
 

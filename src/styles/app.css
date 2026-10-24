@@ -321,6 +321,60 @@
   font-size: 1.05rem;
 }
 
+/* Edición en línea */
+.task-item__edit-form {
+  display: grid;
+  gap: 0.65rem;
+  width: 100%;
+}
+
+.task-item__edit-input {
+  width: 100%;
+}
+
+.task-item__edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Acciones generales */
+.task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.task-actions__info {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.field__input:focus,
+.button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 /* Pie de página */
 .app-footer {
   margin-top: auto;
