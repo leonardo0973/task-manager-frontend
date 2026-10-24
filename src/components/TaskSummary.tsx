@@ -1,14 +1,17 @@
+import type { Task } from '../models/task.interface'
+
 interface TaskSummaryProps {
-  total: number
-  completed: number
-  pending: number
+  tasks: Task[]
 }
 
-function TaskSummary({ total, completed, pending }: TaskSummaryProps) {
+function TaskSummary({ tasks }: TaskSummaryProps) {
+  const completed = tasks.filter(({ status }) => status === 'completed').length
+  const pending = tasks.length - completed
+
   return (
     <section className="task-summary" aria-label="Resumen de tareas">
       <article className="stat">
-        <span className="stat__value">{total}</span>
+        <span className="stat__value">{tasks.length}</span>
         <span className="stat__label">Total</span>
       </article>
       <article className="stat stat--pending">

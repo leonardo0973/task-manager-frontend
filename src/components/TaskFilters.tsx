@@ -1,11 +1,11 @@
-import type { TaskFilter } from '../types'
+import type { TaskFilterOption } from '../models/task-filter.types'
 
 interface TaskFiltersProps {
-  filters: TaskFilter[]
-  activeFilter: TaskFilter
+  filters: TaskFilterOption[]
+  activeFilter: TaskFilterOption
 }
 
-const filterLabels: Record<TaskFilter, string> = {
+const filterLabels: Record<TaskFilterOption, string> = {
   todas: 'Todas',
   pendientes: 'Pendientes',
   completadas: 'Completadas',
