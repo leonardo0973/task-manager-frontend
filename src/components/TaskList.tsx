@@ -3,13 +3,22 @@ import TaskItem from './TaskItem'
 
 interface TaskListProps {
   tasks: Task[]
+  totalCount: number
+  emptyMessage: string
   onToggleStatus: (id: string) => void
   onEditTask: (id: string, title: string) => void
   onDeleteTask: (id: string) => void
 }
 
-function TaskList({ tasks, onToggleStatus, onEditTask, onDeleteTask }: TaskListProps) {
-  const resultLabel = tasks.length === 1 ? '1 tarea' : `${tasks.length} tareas`
+function TaskList({
+  tasks,
+  totalCount,
+  emptyMessage,
+  onToggleStatus,
+  onEditTask,
+  onDeleteTask,
+}: TaskListProps) {
+  const resultLabel = totalCount === 1 ? '1 tarea' : `${totalCount} tareas`
 
   return (
     <section className="task-list-section" aria-labelledby="task-list-title">
@@ -25,8 +34,8 @@ function TaskList({ tasks, onToggleStatus, onEditTask, onDeleteTask }: TaskListP
 
       {tasks.length === 0 ? (
         <div className="empty-state" role="status">
-          <h3>No hay tareas registradas</h3>
-          <p>Utiliza el formulario para registrar una nueva actividad.</p>
+          <h3>Sin resultados</h3>
+          <p>{emptyMessage}</p>
         </div>
       ) : (
         <div className="task-list" role="list">

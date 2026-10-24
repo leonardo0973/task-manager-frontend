@@ -123,39 +123,13 @@
   color: var(--color-danger);
 }
 
-/* Panel de tareas y filtros */
+/* Panel de tareas */
 .tasks-panel__header {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-}
-
-.task-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.chip {
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
-  padding: 6px 14px;
-  background: #fff;
-  color: var(--color-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.chip:disabled {
-  cursor: not-allowed;
-}
-
-.chip--active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
 }
 
 /* Resumen */
@@ -375,6 +349,78 @@
   outline-offset: 2px;
 }
 
+/* Validación */
+.field-error {
+  margin: 0;
+  color: #9b1c1c;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+input[aria-invalid='true'] {
+  border-color: #9b1c1c;
+  outline-color: #9b1c1c;
+}
+
+/* Consulta: búsqueda, filtro y orden */
+.task-filters-panel {
+  margin-bottom: 18px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 1rem;
+  align-items: end;
+  margin-top: 10px;
+}
+
+.filter-field:first-child {
+  grid-column: 1 / -1;
+}
+
+.filter-field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.filter-field span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.filter-field input,
+.filter-field select {
+  width: 100%;
+}
+
+.filter-results {
+  min-height: 1.4rem;
+  margin: 1rem 0 0;
+  color: #4b5563;
+  font-size: 0.85rem;
+}
+
+/* Paginación */
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.pagination__info {
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
 /* Pie de página */
 .app-footer {
   margin-top: auto;
@@ -400,5 +446,16 @@
   .task-form {
     position: sticky;
     top: 24px;
+  }
+}
+
+/* Consulta en pantallas estrechas */
+@media (max-width: 760px) {
+  .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-field:first-child {
+    grid-column: auto;
   }
 }

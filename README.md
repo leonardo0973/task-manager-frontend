@@ -1,54 +1,29 @@
-# Administrador de tareas - Frontend
+# Administrador de tareas Frontend
 
-Aplicación desarrollada con React, TypeScript, Vite y PNPM para administrar tareas.
-Proyecto integrador de la materia *Diseño Frontend con Frameworks*.
+Aplicación desarrollada con React, TypeScript, Vite y PNPM.
+Proyecto integrador de la materia *Diseño Frontend con Frameworks* (EC2).
 
-## Alcance actual (EC2 F2 A7)
+## Funciones actuales
 
-La aplicación administra una colección local de tareas mediante estado de React. Actualmente permite:
-
-- Registrar tareas.
-- Consultar la colección.
-- Completar y reabrir tareas.
-- Editar títulos.
-- Cancelar una edición.
-- Eliminar con confirmación.
-- Eliminar todas las tareas completadas en una sola operación.
-- Calcular el resumen automáticamente.
-- Mostrar una colección vacía.
-
-Los cambios permanecen en memoria y se reinician al recargar.
-
-## Operaciones CRUD
-
-- Create: registro mediante el formulario (`spread`).
-- Read: renderizado de la colección (`map`).
-- Update: cambio de estado y edición (`map` y `spread`).
-- Delete: eliminación confirmada (`filter`).
-
-## Tecnologías
-
-- React
-- TypeScript
-- Vite
-- PNPM
-- Oxlint
-- CSS
-- Git y GitHub
-
-## Instalación
-
-```bash
-pnpm install
-```
+- Operaciones CRUD de tareas (registrar, consultar, completar/reabrir, editar y eliminar con confirmación).
+- Eliminación de todas las tareas completadas en una sola operación.
+- Validación al registrar y editar (mínimo 3 y máximo 120 caracteres) con mensajes accesibles.
+- Búsqueda por título (sin distinguir mayúsculas ni espacios externos).
+- Filtro por estado: Todas, Pendientes y Completadas.
+- Ordenamiento por actualización reciente, creación reciente y título A a Z.
+- Paginación local de cinco resultados por página.
+- Resumen calculado con todas las tareas.
+- Persistencia mediante `localStorage` (clave `task-manager.tasks`).
+- Interfaz adaptable.
 
 ## Ejecución
 
 ```bash
+pnpm install
 pnpm dev
 ```
 
-## Validación
+## Validación técnica
 
 ```bash
 pnpm lint
@@ -57,15 +32,28 @@ pnpm build
 
 ## Estructura principal
 
-- `components`: componentes visuales.
-- `data`: colección local de tareas.
-- `models`: tipos e interfaces.
-- `styles`: estilos globales.
-- `docs`: preguntas y documentación.
+```
+src/
+├── components/   # Componentes visuales (TaskForm, TaskFilters, TaskList, TaskItem, ...)
+├── data/         # Tareas iniciales de respaldo
+├── models/       # Task, TaskStatus, TaskFilter, TaskSort y TaskViewOptions
+├── services/     # Consulta (task-query) y almacenamiento local (task-storage)
+├── styles/       # Estilos globales y de la aplicación
+├── utils/        # Validación del título
+├── App.tsx       # Estado principal, operaciones CRUD y vista derivada
+└── main.tsx      # Punto de entrada
+docs/             # Preguntas de cierre de cada actividad
+```
+
+## Flujo de datos
+
+| Etapa          | Entrada                               | Resultado                                      |
+|----------------|---------------------------------------|------------------------------------------------|
+| Carga inicial  | `localStorage` o datos de respaldo    | `tasks` en `App`                               |
+| Vista derivada | `tasks`, `query`, `filter` y `sortBy` | `getVisibleTasks` produce la lista de `TaskList` |
+| Sincronización | Cambio en `tasks`                     | `useEffect` guarda la colección                |
 
 ## Modelo Task
-
-Cada tarea contiene `id`, `title`, `status`, `createdAt` y `updatedAt`.
 
 ```ts
 export type TaskStatus = 'pending' | 'completed'
@@ -79,7 +67,10 @@ export interface Task {
 }
 ```
 
-Las fechas se guardan como cadenas ISO porque así las entregará la API REST.
+## Alcance
+
+Esta versión utiliza almacenamiento local del navegador.
+La conexión con la API REST se realizará en el EC3.
 
 ## Autor
 

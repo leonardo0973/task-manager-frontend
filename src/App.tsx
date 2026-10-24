@@ -1,24 +1,47 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AppFooter from './components/AppFooter'
 import AppHeader from './components/AppHeader'
 import TaskActions from './components/TaskActions'
 import TaskFilters from './components/TaskFilters'
 import TaskForm from './components/TaskForm'
 import TaskList from './components/TaskList'
+import TaskPagination from './components/TaskPagination'
 import TaskSummary from './components/TaskSummary'
 import { tasks as initialTasks } from './data/tasks'
-import type { TaskFilterOption } from './models/task-filter.types'
 import type { Task } from './models/task.interface'
+import type { TaskFilter, TaskSort } from './models/task-view.types'
+import { getVisibleTasks } from './services/task-query.service'
+import { loadTasks, saveTasks } from './services/task-storage.service'
 import './styles/app.css'
 
-const filters: TaskFilterOption[] = ['todas', 'pendientes', 'completadas']
+const PAGE_SIZE = 5
 
 function App() {
-  const [tasks, setTasks] = useState<Task[]>(() => [...initialTasks])
+  const [tasks, setTasks] = useState<Task[]>(() => loadTasks(initialTasks))
+  const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<TaskFilter>('all')
+  const [sortBy, setSortBy] = useState<TaskSort>('updated-desc')
+  const [currentPage, setCurrentPage] = useState(1)
+
+  useEffect(() => {
+    saveTasks(tasks)
+  }, [tasks])
+
+  const visibleTasks = getVisibleTasks(tasks, { query, filter, sortBy })
+
+  const totalPages = Math.max(1, Math.ceil(visibleTasks.length / PAGE_SIZE))
+  const safePage = Math.min(currentPage, totalPages)
+  const startIndex = (safePage - 1) * PAGE_SIZE
+  const paginatedTasks = visibleTasks.slice(startIndex, startIndex + PAGE_SIZE)
 
   const completedCount = tasks.filter((task) => task.status === 'completed').length
 
-  function handleAddTask(title: string) {
+  const hasActiveCriteria = query.trim() !== '' || filter !== 'all'
+  const emptyMessage = hasActiveCriteria
+    ? 'No hay tareas que coincidan con la búsqueda y el filtro.'
+    : 'Utiliza el formulario para registrar una nueva actividad.'
+
+  function handleAddTask(title: string): void {
     const now = new Date().toISOString()
 
     const newTask: Task = {
@@ -32,7 +55,7 @@ function App() {
     setTasks((currentTasks) => [newTask, ...currentTasks])
   }
 
-  function handleToggleStatus(id: string) {
+  function handleToggleStatus(id: string): void {
     const now = new Date().toISOString()
 
     setTasks((currentTasks) =>
@@ -50,7 +73,7 @@ function App() {
     )
   }
 
-  function handleEditTask(id: string, title: string) {
+  function handleEditTask(id: string, title: string): void {
     const now = new Date().toISOString()
 
     setTasks((currentTasks) =>
@@ -60,7 +83,7 @@ function App() {
     )
   }
 
-  function handleDeleteTask(id: string) {
+  function handleDeleteTask(id: string): void {
     const selectedTask = tasks.find((task) => task.id === id)
 
     if (!selectedTask) {
@@ -76,7 +99,7 @@ function App() {
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id))
   }
 
-  function handleClearCompleted() {
+  function handleClearCompleted(): void {
     if (completedCount === 0) {
       return
     }
@@ -94,6 +117,23 @@ function App() {
     )
   }
 
+  function handleQueryChange(value: string): void {
+    setQuery(value)
+    setCurrentPage(1)
+  }
+
+  function handleFilterChange(value: TaskFilter): void {
+    setFilter(value)
+    setCurrentPage(1)
+  }
+
+  function handleClearCriteria(): void {
+    setQuery('')
+    setFilter('all')
+    setSortBy('updated-desc')
+    setCurrentPage(1)
+  }
+
   return (
     <div className="app">
       <AppHeader
@@ -107,10 +147,20 @@ function App() {
         <section className="card tasks-panel" aria-labelledby="tasks-title">
           <div className="tasks-panel__header">
             <h2 id="tasks-title" className="card__title">Mis tareas</h2>
-            <TaskFilters filters={filters} activeFilter="todas" />
           </div>
 
           <TaskSummary tasks={tasks} />
+
+          <TaskFilters
+            query={query}
+            filter={filter}
+            sortBy={sortBy}
+            resultCount={visibleTasks.length}
+            onQueryChange={handleQueryChange}
+            onFilterChange={handleFilterChange}
+            onSortChange={setSortBy}
+            onClear={handleClearCriteria}
+          />
 
           <TaskActions
             completedCount={completedCount}
@@ -118,10 +168,18 @@ function App() {
           />
 
           <TaskList
-            tasks={tasks}
+            tasks={paginatedTasks}
+            totalCount={visibleTasks.length}
+            emptyMessage={emptyMessage}
             onToggleStatus={handleToggleStatus}
             onEditTask={handleEditTask}
             onDeleteTask={handleDeleteTask}
+          />
+
+          <TaskPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
           />
         </section>
       </main>
