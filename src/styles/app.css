@@ -372,7 +372,7 @@ input[aria-invalid='true'] {
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   align-items: end;
   margin-top: 10px;
@@ -380,6 +380,11 @@ input[aria-invalid='true'] {
 
 .filter-field:first-child {
   grid-column: 1 / -1;
+}
+
+.filters-grid > .button {
+  grid-column: 1 / -1;
+  justify-self: end;
 }
 
 .filter-field {
@@ -558,6 +563,39 @@ input[aria-invalid='true'] {
   margin-top: 1rem;
 }
 
+/* Estado de las solicitudes remotas */
+.request-status,
+.operation-message {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.request-status--error,
+.operation-message--error {
+  border-color: var(--color-danger);
+  background: var(--color-danger-soft);
+  color: #7f1d1d;
+}
+
+.request-status h3 {
+  margin-bottom: 0.4rem;
+}
+
+.request-status--error .button {
+  margin-top: 0.75rem;
+}
+
+.task-detail__actions--spaced {
+  margin-top: 1rem;
+}
+
+[aria-busy='true'] {
+  opacity: 0.7;
+}
+
 /* Pie de página */
 .app-footer {
   margin-top: auto;
@@ -617,5 +655,17 @@ input[aria-invalid='true'] {
   .task-detail__actions .button-link,
   .task-detail__actions .button {
     width: 100%;
+  }
+}
+
+/* Resumen y paginación en pantallas pequeñas */
+@media (max-width: 640px) {
+  .task-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

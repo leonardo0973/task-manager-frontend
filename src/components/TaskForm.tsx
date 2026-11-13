@@ -4,10 +4,11 @@ import { TASK_TITLE_MAX_LENGTH, validateTaskTitle } from '../utils/task-validati
 
 interface TaskFormProps {
   title: string
-  onAddTask: (title: string) => void
+  isSubmitting: boolean
+  onAddTask: (title: string) => Promise<boolean>
 }
 
-function TaskForm({ title: formTitle, onAddTask }: TaskFormProps) {
+function TaskForm({ title: formTitle, isSubmitting, onAddTask }: TaskFormProps) {
   const [title, setTitle] = useState('')
   const [error, setError] = useState('')
 
@@ -19,19 +20,24 @@ function TaskForm({ title: formTitle, onAddTask }: TaskFormProps) {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
 
     const validationMessage = validateTaskTitle(title)
 
+    // Un título inválido no llega a la API (no se hace POST)
     if (validationMessage) {
       setError(validationMessage)
       return
     }
 
-    onAddTask(title.trim())
-    setTitle('')
-    setError('')
+    const wasCreated = await onAddTask(title.trim())
+
+    // El campo se limpia solo si el POST fue satisfactorio
+    if (wasCreated) {
+      setTitle('')
+      setError('')
+    }
   }
 
   return (
@@ -39,7 +45,11 @@ function TaskForm({ title: formTitle, onAddTask }: TaskFormProps) {
       <p className="section-heading__eyebrow">Registro</p>
       <h2 id="task-form-title" className="card__title">{formTitle}</h2>
 
-      <form className="task-form__fields" onSubmit={handleSubmit} noValidate>
+      <form
+        className="task-form__fields"
+        onSubmit={(event) => void handleSubmit(event)}
+        noValidate
+      >
         <label className="field" htmlFor="task-title">
           <span className="field__label">Título de la tarea</span>
           <input
@@ -50,6 +60,7 @@ function TaskForm({ title: formTitle, onAddTask }: TaskFormProps) {
             placeholder="Ejemplo: revisar documentación"
             maxLength={TASK_TITLE_MAX_LENGTH}
             value={title}
+            disabled={isSubmitting}
             onChange={(event) => handleTitleChange(event.target.value)}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? 'task-title-help task-title-error' : 'task-title-help'}
@@ -62,8 +73,8 @@ function TaskForm({ title: formTitle, onAddTask }: TaskFormProps) {
           </p>
         )}
 
-        <button className="button button--primary" type="submit">
-          Agregar tarea
+        <button className="button button--primary" type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : 'Agregar tarea'}
         </button>
 
         <p id="task-title-help" className="hint">

@@ -1,46 +1,130 @@
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import TaskStatusBadge from '../components/TaskStatusBadge'
 import type { Task } from '../models/task.interface'
+import { getHttpErrorMessage, isAbortError, isHttpError } from '../services/http.service'
+import { deleteTask, getTaskById } from '../services/task.api.service'
 import { formatTaskDate } from '../utils/date'
 import NotFoundPage from './NotFoundPage'
 
-interface TaskDetailPageProps {
-  tasks: Task[]
-  onDeleteTask: (id: string) => boolean
-}
+type DetailStatus = 'loading' | 'success' | 'not-found' | 'error'
 
-function TaskDetailPage({ tasks, onDeleteTask }: TaskDetailPageProps) {
-  // El nombre coincide con el segmento :taskId declarado en la ruta
+function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>()
   const navigate = useNavigate()
+  const [task, setTask] = useState<Task | null>(null)
+  const [status, setStatus] = useState<DetailStatus>('loading')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const task = tasks.find((currentTask) => currentTask.id === taskId)
+  // El detalle consulta GET /api/tasks/:id; no depende de la lista cargada,
+  // por eso funciona al recargar directamente la ruta
+  useEffect(() => {
+    if (!taskId) {
+      return
+    }
 
-  if (!task) {
-    return (
-      <NotFoundPage
-        title="Tarea no encontrada"
-        message="La tarea solicitada no existe o fue eliminada."
-      />
-    )
-  }
+    const id = taskId
+    const controller = new AbortController()
 
-  function handleDeleteTask(): void {
+    async function loadTask(): Promise<void> {
+      setStatus('loading')
+      setErrorMessage('')
+
+      try {
+        const response = await getTaskById(id, controller.signal)
+        setTask(response.data)
+        setStatus('success')
+      } catch (error) {
+        if (isAbortError(error)) {
+          return
+        }
+
+        // 404: no existe. 400 INVALID_ID: el identificador ni siquiera tiene formato válido
+        if (
+          isHttpError(error) &&
+          (error.status === 404 || (error.status === 400 && error.code === 'INVALID_ID'))
+        ) {
+          setStatus('not-found')
+          return
+        }
+
+        setStatus('error')
+        setErrorMessage(getHttpErrorMessage(error))
+      }
+    }
+
+    void loadTask()
+
+    return () => controller.abort()
+  }, [taskId, reloadKey])
+
+  async function handleDelete(): Promise<void> {
     if (!task) {
       return
     }
 
-    const wasDeleted = onDeleteTask(task.id)
+    const shouldDelete = window.confirm(`¿Eliminar la tarea "${task.title}"?`)
 
-    if (wasDeleted) {
-      // replace: el detalle eliminado no queda como entrada inmediata del historial
-      navigate('/tasks', { replace: true })
+    if (!shouldDelete) {
+      return
     }
+
+    setIsDeleting(true)
+
+    try {
+      await deleteTask(task.id)
+      navigate('/tasks', { replace: true })
+    } catch (error) {
+      setStatus('error')
+      setErrorMessage(getHttpErrorMessage(error))
+      setIsDeleting(false)
+    }
+  }
+
+  if (!taskId) {
+    return <NotFoundPage title="Tarea no encontrada" message="La tarea no existe o fue eliminada." />
+  }
+
+  if (status === 'loading') {
+    return (
+      <p className="request-status" role="status">
+        Consultando tarea...
+      </p>
+    )
+  }
+
+  if (status === 'not-found') {
+    return (
+      <NotFoundPage title="Tarea no encontrada" message="La tarea no existe o fue eliminada." />
+    )
+  }
+
+  if (status === 'error' || !task) {
+    return (
+      <section className="card request-status--error" role="alert">
+        <h2 className="page-title">No fue posible consultar la tarea</h2>
+        <p className="page-text">{errorMessage}</p>
+        <div className="task-detail__actions task-detail__actions--spaced">
+          <button
+            className="button button--primary"
+            type="button"
+            onClick={() => setReloadKey((current) => current + 1)}
+          >
+            Reintentar
+          </button>
+          <Link className="button-link button-link--secondary" to="/tasks">
+            Volver a tareas
+          </Link>
+        </div>
+      </section>
+    )
   }
 
   return (
     <article className="card task-detail" aria-labelledby="task-detail-title">
-      <p className="section-heading__eyebrow">Detalle</p>
+      <p className="section-heading__eyebrow">Detalle remoto</p>
       <h2 id="task-detail-title" className="page-title">
         {task.title}
       </h2>
@@ -74,8 +158,13 @@ function TaskDetailPage({ tasks, onDeleteTask }: TaskDetailPageProps) {
         <Link className="button-link button-link--secondary" to="/tasks">
           Volver a tareas
         </Link>
-        <button className="button button--danger" type="button" onClick={handleDeleteTask}>
-          Eliminar tarea
+        <button
+          className="button button--danger"
+          type="button"
+          disabled={isDeleting}
+          onClick={() => void handleDelete()}
+        >
+          {isDeleting ? 'Eliminando...' : 'Eliminar tarea'}
         </button>
       </div>
     </article>

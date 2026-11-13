@@ -1,11 +1,13 @@
+import type { PageMeta } from '../models/api.types'
+
 interface TaskPaginationProps {
-  currentPage: number
-  totalPages: number
+  meta: PageMeta
+  disabled: boolean
   onPageChange: (page: number) => void
 }
 
-function TaskPagination({ currentPage, totalPages, onPageChange }: TaskPaginationProps) {
-  if (totalPages <= 1) {
+function TaskPagination({ meta, disabled, onPageChange }: TaskPaginationProps) {
+  if (meta.totalPages <= 1) {
     return null
   }
 
@@ -14,21 +16,21 @@ function TaskPagination({ currentPage, totalPages, onPageChange }: TaskPaginatio
       <button
         className="button button--ghost"
         type="button"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
+        disabled={disabled || !meta.hasPreviousPage}
+        onClick={() => onPageChange(meta.page - 1)}
       >
         Anterior
       </button>
 
       <span className="pagination__info" aria-live="polite">
-        Página {currentPage} de {totalPages}
+        Página {meta.page} de {meta.totalPages}
       </span>
 
       <button
         className="button button--ghost"
         type="button"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
+        disabled={disabled || !meta.hasNextPage}
+        onClick={() => onPageChange(meta.page + 1)}
       >
         Siguiente
       </button>

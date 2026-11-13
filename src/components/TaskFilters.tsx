@@ -1,10 +1,13 @@
 import type { TaskFilter, TaskSort } from '../models/task-view.types'
 
+export const TASK_SEARCH_MAX_LENGTH = 60
+
 interface TaskFiltersProps {
   query: string
   filter: TaskFilter
   sortBy: TaskSort
   resultCount: number
+  isLoading: boolean
   onQueryChange: (value: string) => void
   onFilterChange: (value: TaskFilter) => void
   onSortChange: (value: TaskSort) => void
@@ -16,22 +19,19 @@ function TaskFilters({
   filter,
   sortBy,
   resultCount,
+  isLoading,
   onQueryChange,
   onFilterChange,
   onSortChange,
   onClear,
 }: TaskFiltersProps) {
-  const hasActiveCriteria =
-    query.trim() !== '' || filter !== 'all' || sortBy !== 'updated-desc'
-
-  const resultLabel =
-    resultCount === 1 ? '1 resultado visible.' : `${resultCount} resultados visibles.`
+  const hasActiveCriteria = query !== '' || filter !== 'all' || sortBy !== 'updated-desc'
 
   return (
     <section className="task-filters-panel" aria-labelledby="task-filters-title">
       <p className="section-heading__eyebrow">Consulta</p>
       <h3 id="task-filters-title" className="section-heading__title">
-        Buscar y organizar
+        Consultar tareas
       </h3>
 
       <div className="filters-grid">
@@ -41,7 +41,8 @@ function TaskFilters({
             className="field__input"
             type="search"
             value={query}
-            placeholder="Ejemplo: documentación"
+            maxLength={TASK_SEARCH_MAX_LENGTH}
+            placeholder="Ejemplo: preparar"
             onChange={(event) => onQueryChange(event.target.value)}
           />
         </label>
@@ -60,15 +61,16 @@ function TaskFilters({
         </label>
 
         <label className="filter-field">
-          <span>Ordenar por</span>
+          <span>Orden</span>
           <select
             className="field__input"
             value={sortBy}
             onChange={(event) => onSortChange(event.target.value as TaskSort)}
           >
-            <option value="updated-desc">Actualización reciente</option>
-            <option value="created-desc">Creación reciente</option>
-            <option value="title-asc">Título A a Z</option>
+            <option value="updated-desc">Actualizadas recientemente</option>
+            <option value="updated-asc">Actualizadas anteriormente</option>
+            <option value="title-asc">Título A-Z</option>
+            <option value="title-desc">Título Z-A</option>
           </select>
         </label>
 
@@ -83,7 +85,7 @@ function TaskFilters({
       </div>
 
       <p className="filter-results" role="status">
-        {resultLabel}
+        {isLoading ? 'Actualizando resultados...' : `${resultCount} resultado(s)`}
       </p>
     </section>
   )
