@@ -5,7 +5,7 @@ interface AppFooterProps {
 function AppFooter({ courseName }: AppFooterProps) {
   return (
     <footer className="app-footer">
-      <p>{courseName} · EC2</p>
+      <p>Administrador de tareas · {courseName} · EC3</p>
     </footer>
   )
 }

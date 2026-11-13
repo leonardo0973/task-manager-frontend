@@ -1,10 +1,20 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router'
 import './styles/global.css'
 import App from './App.tsx'
 
-createRoot(document.getElementById('root')!).render(
+const root = document.getElementById('root')
+
+if (!root) {
+  throw new Error('No se encontró el elemento #root.')
+}
+
+// BrowserRouter envuelve la aplicación una sola vez
+createRoot(root).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>,
 )

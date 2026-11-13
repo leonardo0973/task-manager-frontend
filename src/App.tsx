@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
-import AppFooter from './components/AppFooter'
-import AppHeader from './components/AppHeader'
-import TaskActions from './components/TaskActions'
-import TaskFilters from './components/TaskFilters'
-import TaskForm from './components/TaskForm'
-import TaskList from './components/TaskList'
-import TaskPagination from './components/TaskPagination'
-import TaskSummary from './components/TaskSummary'
+import { Route, Routes, useSearchParams } from 'react-router'
 import { tasks as initialTasks } from './data/tasks'
+import AppLayout from './layouts/AppLayout'
 import type { Task } from './models/task.interface'
 import type { TaskFilter, TaskSort } from './models/task-view.types'
+import HomePage from './pages/HomePage'
+import NotFoundPage from './pages/NotFoundPage'
+import TaskDetailPage from './pages/TaskDetailPage'
+import TasksPage from './pages/TasksPage'
 import { getVisibleTasks } from './services/task-query.service'
 import { loadTasks, saveTasks } from './services/task-storage.service'
 import './styles/app.css'
@@ -18,10 +16,13 @@ const PAGE_SIZE = 5
 
 function App() {
   const [tasks, setTasks] = useState<Task[]>(() => loadTasks(initialTasks))
-  const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<TaskFilter>('all')
   const [sortBy, setSortBy] = useState<TaskSort>('updated-desc')
   const [currentPage, setCurrentPage] = useState(1)
+
+  // Desafío A9: la búsqueda vive en la URL (/tasks?q=texto)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') ?? ''
 
   useEffect(() => {
     saveTasks(tasks)
@@ -83,20 +84,23 @@ function App() {
     )
   }
 
-  function handleDeleteTask(id: string): void {
+  // Devuelve true solo si la tarea se eliminó; el detalle lo usa para navegar
+  function handleDeleteTask(id: string): boolean {
     const selectedTask = tasks.find((task) => task.id === id)
 
     if (!selectedTask) {
-      return
+      return false
     }
 
     const shouldDelete = window.confirm(`¿Eliminar la tarea "${selectedTask.title}"?`)
 
     if (!shouldDelete) {
-      return
+      return false
     }
 
     setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id))
+
+    return true
   }
 
   function handleClearCompleted(): void {
@@ -118,7 +122,8 @@ function App() {
   }
 
   function handleQueryChange(value: string): void {
-    setQuery(value)
+    // Sin q cuando la búsqueda está vacía; replace evita llenar el historial al escribir
+    setSearchParams(value ? { q: value } : {}, { replace: true })
     setCurrentPage(1)
   }
 
@@ -128,64 +133,50 @@ function App() {
   }
 
   function handleClearCriteria(): void {
-    setQuery('')
+    setSearchParams({}, { replace: true })
     setFilter('all')
     setSortBy('updated-desc')
     setCurrentPage(1)
   }
 
   return (
-    <div className="app">
-      <AppHeader
-        title="Administrador de tareas"
-        subtitle="Organiza tus pendientes del semestre en un solo lugar."
-      />
-
-      <main className="app-layout">
-        <TaskForm title="Nueva tarea" onAddTask={handleAddTask} />
-
-        <section className="card tasks-panel" aria-labelledby="tasks-title">
-          <div className="tasks-panel__header">
-            <h2 id="tasks-title" className="card__title">Mis tareas</h2>
-          </div>
-
-          <TaskSummary tasks={tasks} />
-
-          <TaskFilters
-            query={query}
-            filter={filter}
-            sortBy={sortBy}
-            resultCount={visibleTasks.length}
-            onQueryChange={handleQueryChange}
-            onFilterChange={handleFilterChange}
-            onSortChange={setSortBy}
-            onClear={handleClearCriteria}
-          />
-
-          <TaskActions
-            completedCount={completedCount}
-            onClearCompleted={handleClearCompleted}
-          />
-
-          <TaskList
-            tasks={paginatedTasks}
-            totalCount={visibleTasks.length}
-            emptyMessage={emptyMessage}
-            onToggleStatus={handleToggleStatus}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-          />
-
-          <TaskPagination
-            currentPage={safePage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </section>
-      </main>
-
-      <AppFooter courseName="Diseño Frontend con Frameworks" />
-    </div>
+    <Routes>
+      <Route element={<AppLayout />}>
+        <Route index element={<HomePage tasks={tasks} />} />
+        <Route
+          path="tasks"
+          element={
+            <TasksPage
+              tasks={tasks}
+              visibleTasks={visibleTasks}
+              paginatedTasks={paginatedTasks}
+              currentPage={safePage}
+              totalPages={totalPages}
+              completedCount={completedCount}
+              query={query}
+              filter={filter}
+              sortBy={sortBy}
+              emptyMessage={emptyMessage}
+              onAddTask={handleAddTask}
+              onQueryChange={handleQueryChange}
+              onFilterChange={handleFilterChange}
+              onSortChange={setSortBy}
+              onClearCriteria={handleClearCriteria}
+              onPageChange={setCurrentPage}
+              onClearCompleted={handleClearCompleted}
+              onToggleStatus={handleToggleStatus}
+              onEditTask={handleEditTask}
+              onDeleteTask={handleDeleteTask}
+            />
+          }
+        />
+        <Route
+          path="tasks/:taskId"
+          element={<TaskDetailPage tasks={tasks} onDeleteTask={handleDeleteTask} />}
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   )
 }
 

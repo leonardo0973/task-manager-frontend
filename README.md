@@ -1,20 +1,34 @@
 # Administrador de tareas Frontend
 
-Aplicación desarrollada con React, TypeScript, Vite y PNPM.
-Proyecto integrador de la materia *Diseño Frontend con Frameworks* (EC2).
+Aplicación desarrollada con React, TypeScript, Vite, React Router y PNPM.
+Proyecto integrador de la materia *Diseño Frontend con Frameworks* (EC3).
 
 ## Funciones actuales
 
-- Operaciones CRUD de tareas (registrar, consultar, completar/reabrir, editar y eliminar con confirmación).
+- Navegación SPA con React Router 7.18.4 (modo declarativo).
+- Página de inicio con el resumen de tareas.
+- Administración de tareas en `/tasks`.
+- Detalle de cada tarea mediante una ruta dinámica.
+- Página 404 para direcciones y tareas inexistentes.
+- Operaciones CRUD (registrar, completar/reabrir, editar y eliminar con confirmación).
 - Eliminación de todas las tareas completadas en una sola operación.
-- Validación al registrar y editar (mínimo 3 y máximo 120 caracteres) con mensajes accesibles.
-- Búsqueda por título (sin distinguir mayúsculas ni espacios externos).
-- Filtro por estado: Todas, Pendientes y Completadas.
-- Ordenamiento por actualización reciente, creación reciente y título A a Z.
+- Validación de títulos (mínimo 3 y máximo 120 caracteres).
+- Búsqueda, filtros y ordenamiento.
+- Búsqueda conservada en la URL (`/tasks?q=texto`).
 - Paginación local de cinco resultados por página.
-- Resumen calculado con todas las tareas.
 - Persistencia mediante `localStorage` (clave `task-manager.tasks`).
 - Interfaz adaptable.
+
+## Rutas
+
+| Ruta             | Página           | Responsabilidad                         |
+|------------------|------------------|-----------------------------------------|
+| `/`              | `HomePage`       | Presentar la aplicación y su resumen    |
+| `/tasks`         | `TasksPage`      | Administrar la colección completa       |
+| `/tasks/:taskId` | `TaskDetailPage` | Mostrar una tarea identificada por su ID |
+| `*`              | `NotFoundPage`   | Responder ante una ruta inexistente     |
+
+Todas las páginas se muestran dentro de `AppLayout` (encabezado, navegación, contenido y pie) mediante `Outlet`.
 
 ## Ejecución
 
@@ -34,44 +48,24 @@ pnpm build
 
 ```
 src/
-├── components/   # Componentes visuales (TaskForm, TaskFilters, TaskList, TaskItem, ...)
+├── components/   # Componentes visuales (AppNavigation, TaskForm, TaskList, TaskItem, ...)
 ├── data/         # Tareas iniciales de respaldo
-├── models/       # Task, TaskStatus, TaskFilter, TaskSort y TaskViewOptions
-├── services/     # Consulta (task-query) y almacenamiento local (task-storage)
+├── layouts/      # AppLayout con Outlet
+├── models/       # Task, TaskStatus, TaskFilter y TaskSort
+├── pages/        # HomePage, TasksPage, TaskDetailPage y NotFoundPage
+├── services/     # Consulta y almacenamiento local
 ├── styles/       # Estilos globales y de la aplicación
-├── utils/        # Validación del título
-├── App.tsx       # Estado principal, operaciones CRUD y vista derivada
-└── main.tsx      # Punto de entrada
+├── utils/        # Validación del título y formato de fechas
+├── App.tsx       # Estado principal, operaciones CRUD y declaración de rutas
+└── main.tsx      # Punto de entrada con BrowserRouter
 docs/             # Preguntas de cierre de cada actividad
-```
-
-## Flujo de datos
-
-| Etapa          | Entrada                               | Resultado                                      |
-|----------------|---------------------------------------|------------------------------------------------|
-| Carga inicial  | `localStorage` o datos de respaldo    | `tasks` en `App`                               |
-| Vista derivada | `tasks`, `query`, `filter` y `sortBy` | `getVisibleTasks` produce la lista de `TaskList` |
-| Sincronización | Cambio en `tasks`                     | `useEffect` guarda la colección                |
-
-## Modelo Task
-
-```ts
-export type TaskStatus = 'pending' | 'completed'
-
-export interface Task {
-  id: string
-  title: string
-  status: TaskStatus
-  createdAt: string
-  updatedAt: string
-}
 ```
 
 ## Alcance
 
-Esta versión utiliza almacenamiento local del navegador.
-La conexión con la API REST se realizará en el EC3.
+Esta versión utiliza almacenamiento local.
+La API REST se integrará en la Actividad 10.
 
 ## Autor
 
-Leonardo — Ingeniería en Sistemas, Universidad Estatal de Sonora.
+Leonardo — Universidad Estatal de Sonora.

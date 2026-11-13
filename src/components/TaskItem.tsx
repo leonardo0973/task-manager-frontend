@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router'
 import type { Task } from '../models/task.interface'
+import { formatTaskDate } from '../utils/date'
 import { TASK_TITLE_MAX_LENGTH, validateTaskTitle } from '../utils/task-validation'
 import TaskStatusBadge from './TaskStatusBadge'
 
@@ -8,13 +10,7 @@ interface TaskItemProps {
   task: Task
   onToggleStatus: (id: string) => void
   onEditTask: (id: string, title: string) => void
-  onDeleteTask: (id: string) => void
-}
-
-function formatTaskDate(value: string): string {
-  return new Intl.DateTimeFormat('es-MX', {
-    dateStyle: 'medium',
-  }).format(new Date(value))
+  onDeleteTask: (id: string) => boolean
 }
 
 function TaskItem({ task, onToggleStatus, onEditTask, onDeleteTask }: TaskItemProps) {
@@ -118,6 +114,11 @@ function TaskItem({ task, onToggleStatus, onEditTask, onDeleteTask }: TaskItemPr
         role="group"
         aria-label={`Acciones para ${title}`}
       >
+        {!isEditing && (
+          <Link className="button-link button-link--secondary" to={`/tasks/${id}`}>
+            Ver detalle
+          </Link>
+        )}
         <button
           className="button button--ghost"
           type="button"
@@ -137,7 +138,9 @@ function TaskItem({ task, onToggleStatus, onEditTask, onDeleteTask }: TaskItemPr
         <button
           className="button button--danger"
           type="button"
-          onClick={() => onDeleteTask(id)}
+          onClick={() => {
+            onDeleteTask(id)
+          }}
           disabled={isEditing}
         >
           Eliminar
