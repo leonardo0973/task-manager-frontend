@@ -9,6 +9,10 @@ interface HttpErrorOptions {
   details?: unknown
 }
 
+type UnauthorizedHandler = () => void
+
+let unauthorizedHandler: UnauthorizedHandler | undefined
+
 export class HttpError extends Error {
   readonly status: number
   readonly code: string
@@ -22,6 +26,18 @@ export class HttpError extends Error {
     this.code = options.code
     this.requestId = options.requestId
     this.details = options.details
+  }
+}
+
+// AuthProvider registra aquí cómo cerrar la sesión ante un 401 autenticado.
+// Devuelve una función para retirar el manejador al desmontar el proveedor.
+export function setUnauthorizedHandler(handler: UnauthorizedHandler): () => void {
+  unauthorizedHandler = handler
+
+  return () => {
+    if (unauthorizedHandler === handler) {
+      unauthorizedHandler = undefined
+    }
   }
 }
 
@@ -65,12 +81,21 @@ export function isHttpError(error: unknown): error is HttpError {
   return error instanceof HttpError
 }
 
-export async function httpRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function httpRequest<T>(
+  path: string,
+  options: RequestInit = {},
+  accessToken?: string,
+): Promise<T> {
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
 
   if (options.body && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json')
+  }
+
+  // Authorization solo se agrega cuando el llamador entrega un token no vacío
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`)
   }
 
   try {
@@ -85,6 +110,12 @@ export async function httpRequest<T>(path: string, options: RequestInit = {}): P
 
     // fetch no rechaza un 404 o un 500: se revisa response.ok
     if (!response.ok) {
+      // Solo un 401 de una solicitud autenticada cierra la sesión local.
+      // Un 401 de credenciales incorrectas en login no lleva token.
+      if (response.status === 401 && accessToken) {
+        unauthorizedHandler?.()
+      }
+
       if (isApiErrorBody(payload)) {
         throw new HttpError({
           status: response.status,
