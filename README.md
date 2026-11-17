@@ -1,7 +1,8 @@
 # Administrador de tareas Frontend
 
-SPA desarrollada con React, TypeScript, Vite, React Router, Fetch API y PNPM.
-Proyecto integrador de la materia *Diseño Frontend con Frameworks* (EC3).
+SPA con React, TypeScript, Vite y React Router.
+Consume una API REST protegida mediante JWT Bearer.
+Proyecto integrador de la materia *Diseño Frontend con Frameworks* (EC3) · Versión 1.0.0.
 
 ## Funciones actuales
 
@@ -11,6 +12,8 @@ Proyecto integrador de la materia *Diseño Frontend con Frameworks* (EC3).
 - Cierre de sesión local y manejo automático de sesiones inválidas (401).
 - Eliminación disponible solo para el rol `admin` (la API exige el rol; 403 para `user`).
 - Página de perfil protegida (`/profile`).
+- Pruebas automatizadas con Vitest y Testing Library.
+- Despliegue estático en Render con rewrite SPA.
 - Navegación SPA con React Router 7.18.4 (modo declarativo).
 - Página de inicio, administración de tareas, detalle por ruta dinámica y página 404.
 - Tareas persistidas en MongoDB Atlas mediante la API REST (`task-api-express`).
@@ -41,11 +44,42 @@ Todas las páginas se muestran dentro de `AppLayout` mediante `Outlet`. `Protect
 VITE_API_URL=/api
 ```
 
-## Ejecución
+## Instalación
 
 ```bash
-pnpm install
-pnpm dev
+pnpm install --frozen-lockfile
+```
+
+## Desarrollo
+
+1. Copiar `.env.example` como `.env.local`.
+2. Confirmar `VITE_API_URL=/api`.
+3. Iniciar el Backend en `localhost:3000`.
+4. Ejecutar `pnpm dev`.
+
+## Verificación
+
+```bash
+pnpm verify   # oxlint + vitest + build
+pnpm test     # solo pruebas (no requieren Express ni Atlas)
+```
+
+## Producción
+
+- Frontend: https://FRONTEND.onrender.com
+- API: https://BACKEND.onrender.com
+- Versión: 1.0.0
+
+En producción no existe el proxy de Vite: `VITE_API_URL` apunta directamente al Backend (HTTPS, terminada en `/api`) y el Backend debe tener `CORS_ORIGIN` igual al origen exacto del Frontend. Consulta `docs/deployment-configuration.md` y `docs/release-checklist.md`.
+
+Prueba de humo después del despliegue (PowerShell):
+
+```powershell
+$env:FRONTEND_URL = "https://FRONTEND.onrender.com"
+$env:BACKEND_URL = "https://BACKEND.onrender.com"
+pnpm smoke:production
+Remove-Item Env:FRONTEND_URL
+Remove-Item Env:BACKEND_URL
 ```
 
 ## Integración con la API REST
@@ -85,13 +119,6 @@ Durante el desarrollo, el proxy de Vite (`vite.config.ts`) reenvía `/api` a `ht
 - Consulta de detalle por identificador.
 - Estados de carga, vacío, error y reintento.
 
-## Validación técnica / Compilación
-
-```bash
-pnpm lint
-pnpm build
-```
-
 ## Estructura principal
 
 ```
@@ -106,12 +133,16 @@ src/
 ├── providers/    # AuthProvider: login, registro, restauración, 401 y cierre
 ├── routes/       # ProtectedRoute y PublicOnlyRoute
 ├── services/     # http (Bearer y 401), auth.api, session (token) y task.api
+├── test/         # Pruebas de Vitest y configuración del DOM simulado
 ├── styles/       # Estilos globales y de la aplicación
 ├── utils/        # Validación del título y formato de fechas
 ├── App.tsx       # Declaración de rutas
 ├── main.tsx      # Punto de entrada con BrowserRouter
 └── vite-env.d.ts # Tipos de las variables de entorno
-docs/             # Preguntas de cierre de cada actividad
+scripts/          # smoke-production.mjs
+docs/             # Despliegue, checklist, evidencias y preguntas de cierre
+render.yaml       # Sitio estático de Render
+CHANGELOG.md      # Historial de versiones
 ```
 
 ## Seguridad didáctica
@@ -121,7 +152,7 @@ El access token se conserva en `sessionStorage` (clave `task-manager.access-toke
 ## Alcance
 
 Las tareas aún no pertenecen a un usuario: las identidades autenticadas consultan la misma colección.
-La Actividad 12 agregará pruebas automatizadas, configuración de producción y despliegue.
+Consulta `CHANGELOG.md` para las limitaciones conocidas de la versión 1.0.0.
 
 ## Autor
 
