@@ -6,6 +6,7 @@ import TaskForm from '../components/TaskForm'
 import TaskList from '../components/TaskList'
 import TaskPagination from '../components/TaskPagination'
 import TaskSummary from '../components/TaskSummary'
+import { useAuth } from '../hooks/useAuth'
 import { useTaskList } from '../hooks/useTaskList'
 import type { SortOrder, TaskListQuery, TaskSortField } from '../models/api.types'
 import type { Task } from '../models/task.interface'
@@ -63,6 +64,7 @@ function readPage(value: string | null): number {
 }
 
 function TasksPage() {
+  const { accessToken, user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const [isMutating, setIsMutating] = useState(false)
   const [operationMessage, setOperationMessage] = useState('')
@@ -74,6 +76,8 @@ function TasksPage() {
   const page = readPage(searchParams.get('page'))
 
   const mappedSort = mapSort(sort)
+  // Regla visual: solo admin ve Eliminar. La API exige el rol de todos modos.
+  const canDelete = user?.role === 'admin'
 
   const taskListQuery: TaskListQuery = {
     page,
@@ -84,7 +88,7 @@ function TasksPage() {
     order: mappedSort.order,
   }
 
-  const { tasks, meta, status, errorMessage, reload } = useTaskList(taskListQuery)
+  const { tasks, meta, status, errorMessage, reload } = useTaskList(taskListQuery, accessToken)
 
   // Escribe los criterios en la URL omitiendo los valores predeterminados
   function updateQuery(changes: QueryChanges, replace = false): void {
@@ -101,6 +105,16 @@ function TasksPage() {
 
   function setPage(nextPage: number): void {
     updateQuery({ page: nextPage })
+  }
+
+  function requireToken(): string | null {
+    if (accessToken) {
+      return accessToken
+    }
+
+    setOperationFailed(true)
+    setOperationMessage('La sesión no está disponible.')
+    return null
   }
 
   async function runMutation(
@@ -134,8 +148,11 @@ function TasksPage() {
   }
 
   async function handleAddTask(title: string): Promise<boolean> {
+    const token = requireToken()
+    if (!token) return false
+
     const succeeded = await runMutation(
-      () => createTaskRequest({ title }),
+      () => createTaskRequest({ title }, token),
       'La tarea fue creada.',
     )
 
@@ -147,10 +164,13 @@ function TasksPage() {
   }
 
   async function handleToggleStatus(task: Task): Promise<boolean> {
+    const token = requireToken()
+    if (!token) return false
+
     const nextStatus = task.status === 'pending' ? 'completed' : 'pending'
 
     const succeeded = await runMutation(
-      () => updateTaskRequest(task.id, { status: nextStatus }),
+      () => updateTaskRequest(task.id, { status: nextStatus }, token),
       'El estado fue actualizado.',
     )
 
@@ -162,8 +182,11 @@ function TasksPage() {
   }
 
   async function handleEditTask(task: Task, title: string): Promise<boolean> {
+    const token = requireToken()
+    if (!token) return false
+
     const succeeded = await runMutation(
-      () => updateTaskRequest(task.id, { title }),
+      () => updateTaskRequest(task.id, { title }, token),
       'El título fue actualizado.',
     )
 
@@ -175,6 +198,15 @@ function TasksPage() {
   }
 
   async function handleDeleteTask(task: Task): Promise<boolean> {
+    const token = requireToken()
+    if (!token) return false
+
+    if (!canDelete) {
+      setOperationFailed(true)
+      setOperationMessage('Solo el rol admin puede eliminar tareas.')
+      return false
+    }
+
     const shouldDelete = window.confirm(`¿Eliminar la tarea "${task.title}"?`)
 
     // Al cancelar no se envía ninguna solicitud DELETE
@@ -183,7 +215,7 @@ function TasksPage() {
     }
 
     const succeeded = await runMutation(
-      () => deleteTaskRequest(task.id),
+      () => deleteTaskRequest(task.id, token),
       'La tarea fue eliminada.',
     )
 
@@ -220,11 +252,18 @@ function TasksPage() {
   return (
     <div className="page-stack">
       <section className="page-introduction" aria-labelledby="tasks-page-title">
-        <p className="section-heading__eyebrow">Gestión remota</p>
+        <p className="section-heading__eyebrow">Gestión autenticada</p>
         <h2 id="tasks-page-title" className="page-title">
-          Mis tareas
+          Tareas
         </h2>
-        <p className="page-text">Los cambios se guardan mediante la API REST.</p>
+        <p className="page-text">
+          Sesión de {user?.name}. Los cambios se guardan mediante la API REST.
+        </p>
+        {!canDelete && (
+          <p className="permission-note">
+            Tu rol puede consultar, crear y actualizar. La eliminación requiere admin.
+          </p>
+        )}
       </section>
 
       <div className="app-layout">
@@ -264,6 +303,7 @@ function TasksPage() {
 
               <TaskList
                 tasks={tasks}
+                canDelete={canDelete}
                 onToggleStatus={handleToggleStatus}
                 onEditTask={handleEditTask}
                 onDeleteTask={handleDeleteTask}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import TaskStatusBadge from '../components/TaskStatusBadge'
+import { useAuth } from '../hooks/useAuth'
 import type { Task } from '../models/task.interface'
 import { getHttpErrorMessage, isAbortError, isHttpError } from '../services/http.service'
 import { deleteTask, getTaskById } from '../services/task.api.service'
@@ -12,6 +13,8 @@ type DetailStatus = 'loading' | 'success' | 'not-found' | 'error'
 function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>()
   const navigate = useNavigate()
+  const { accessToken, user } = useAuth()
+  const canDelete = user?.role === 'admin'
   const [task, setTask] = useState<Task | null>(null)
   const [status, setStatus] = useState<DetailStatus>('loading')
   const [errorMessage, setErrorMessage] = useState('')
@@ -21,11 +24,12 @@ function TaskDetailPage() {
   // El detalle consulta GET /api/tasks/:id; no depende de la lista cargada,
   // por eso funciona al recargar directamente la ruta
   useEffect(() => {
-    if (!taskId) {
+    if (!taskId || !accessToken) {
       return
     }
 
     const id = taskId
+    const token = accessToken
     const controller = new AbortController()
 
     async function loadTask(): Promise<void> {
@@ -33,7 +37,7 @@ function TaskDetailPage() {
       setErrorMessage('')
 
       try {
-        const response = await getTaskById(id, controller.signal)
+        const response = await getTaskById(id, token, controller.signal)
         setTask(response.data)
         setStatus('success')
       } catch (error) {
@@ -58,10 +62,10 @@ function TaskDetailPage() {
     void loadTask()
 
     return () => controller.abort()
-  }, [taskId, reloadKey])
+  }, [taskId, accessToken, reloadKey])
 
   async function handleDelete(): Promise<void> {
-    if (!task) {
+    if (!task || !accessToken || !canDelete) {
       return
     }
 
@@ -74,7 +78,7 @@ function TaskDetailPage() {
     setIsDeleting(true)
 
     try {
-      await deleteTask(task.id)
+      await deleteTask(task.id, accessToken)
       navigate('/tasks', { replace: true })
     } catch (error) {
       setStatus('error')
@@ -124,7 +128,7 @@ function TaskDetailPage() {
 
   return (
     <article className="card task-detail" aria-labelledby="task-detail-title">
-      <p className="section-heading__eyebrow">Detalle remoto</p>
+      <p className="section-heading__eyebrow">Detalle protegido</p>
       <h2 id="task-detail-title" className="page-title">
         {task.title}
       </h2>
@@ -154,18 +158,22 @@ function TaskDetailPage() {
         </div>
       </dl>
 
+      {!canDelete && <p className="permission-note">La eliminación requiere el rol admin.</p>}
+
       <div className="task-detail__actions">
         <Link className="button-link button-link--secondary" to="/tasks">
           Volver a tareas
         </Link>
-        <button
-          className="button button--danger"
-          type="button"
-          disabled={isDeleting}
-          onClick={() => void handleDelete()}
-        >
-          {isDeleting ? 'Eliminando...' : 'Eliminar tarea'}
-        </button>
+        {canDelete && (
+          <button
+            className="button button--danger"
+            type="button"
+            disabled={isDeleting}
+            onClick={() => void handleDelete()}
+          >
+            {isDeleting ? 'Eliminando...' : 'Eliminar tarea'}
+          </button>
+        )}
       </div>
     </article>
   )

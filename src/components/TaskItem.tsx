@@ -8,12 +8,13 @@ import TaskStatusBadge from './TaskStatusBadge'
 
 interface TaskItemProps {
   task: Task
+  canDelete: boolean
   onToggleStatus: (task: Task) => Promise<boolean>
   onEditTask: (task: Task, title: string) => Promise<boolean>
   onDeleteTask: (task: Task) => Promise<boolean>
 }
 
-function TaskItem({ task, onToggleStatus, onEditTask, onDeleteTask }: TaskItemProps) {
+function TaskItem({ task, canDelete, onToggleStatus, onEditTask, onDeleteTask }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [draftTitle, setDraftTitle] = useState(task.title)
   const [error, setError] = useState('')
@@ -160,14 +161,17 @@ function TaskItem({ task, onToggleStatus, onEditTask, onDeleteTask }: TaskItemPr
         >
           Editar
         </button>
-        <button
-          className="button button--danger"
-          type="button"
-          disabled={isBusy || isEditing}
-          onClick={() => void handleDelete()}
-        >
-          Eliminar
-        </button>
+        {/* Permiso visual: no es seguridad. La API responde 403 a un user. */}
+        {canDelete && (
+          <button
+            className="button button--danger"
+            type="button"
+            disabled={isBusy || isEditing}
+            onClick={() => void handleDelete()}
+          >
+            Eliminar
+          </button>
+        )}
       </div>
     </article>
   )

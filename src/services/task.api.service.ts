@@ -22,28 +22,59 @@ function createQueryString(query: TaskListQuery): string {
   return params.toString()
 }
 
-export function listTasks(query: TaskListQuery, signal?: AbortSignal): Promise<TaskListResponse> {
-  return httpRequest<TaskListResponse>(`/tasks?${createQueryString(query)}`, { signal })
+// Todas las operaciones de tareas reciben el token; los componentes no
+// conocen el encabezado Authorization, solo entregan el token al servicio.
+export function listTasks(
+  query: TaskListQuery,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<TaskListResponse> {
+  return httpRequest<TaskListResponse>(
+    `/tasks?${createQueryString(query)}`,
+    { signal },
+    accessToken,
+  )
 }
 
-export function getTaskById(id: string, signal?: AbortSignal): Promise<ApiDataResponse<Task>> {
-  return httpRequest<ApiDataResponse<Task>>(`/tasks/${encodeURIComponent(id)}`, { signal })
+export function getTaskById(
+  id: string,
+  accessToken: string,
+  signal?: AbortSignal,
+): Promise<ApiDataResponse<Task>> {
+  return httpRequest<ApiDataResponse<Task>>(
+    `/tasks/${encodeURIComponent(id)}`,
+    { signal },
+    accessToken,
+  )
 }
 
-export function createTask(input: CreateTaskInput): Promise<ApiDataResponse<Task>> {
-  return httpRequest<ApiDataResponse<Task>>('/tasks', {
-    method: 'POST',
-    body: JSON.stringify(input),
-  })
+export function createTask(
+  input: CreateTaskInput,
+  accessToken: string,
+): Promise<ApiDataResponse<Task>> {
+  return httpRequest<ApiDataResponse<Task>>(
+    '/tasks',
+    { method: 'POST', body: JSON.stringify(input) },
+    accessToken,
+  )
 }
 
-export function updateTask(id: string, input: UpdateTaskInput): Promise<ApiDataResponse<Task>> {
-  return httpRequest<ApiDataResponse<Task>>(`/tasks/${encodeURIComponent(id)}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  })
+export function updateTask(
+  id: string,
+  input: UpdateTaskInput,
+  accessToken: string,
+): Promise<ApiDataResponse<Task>> {
+  return httpRequest<ApiDataResponse<Task>>(
+    `/tasks/${encodeURIComponent(id)}`,
+    { method: 'PATCH', body: JSON.stringify(input) },
+    accessToken,
+  )
 }
 
-export function deleteTask(id: string): Promise<void> {
-  return httpRequest<void>(`/tasks/${encodeURIComponent(id)}`, { method: 'DELETE' })
+export function deleteTask(id: string, accessToken: string): Promise<void> {
+  return httpRequest<void>(
+    `/tasks/${encodeURIComponent(id)}`,
+    { method: 'DELETE' },
+    accessToken,
+  )
 }
